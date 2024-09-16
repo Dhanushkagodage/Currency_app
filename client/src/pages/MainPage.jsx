@@ -1,21 +1,41 @@
-import React from "react";
-import { useState } from "react";
+// import React from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function MainPage() {
-    const [date,setDate] = useState(null);
-    const [sourceCurrency,setSourceCurrency] = useState("");
-    const [targetCurrency,setTargetCurrency] = useState("");
-    const [amount,setAmount] = useState(0);
-    const [result,setResult] = useState(0);
+  const [date, setDate] = useState(null);
+  const [sourceCurrency, setSourceCurrency] = useState("");
+  const [targetCurrency, setTargetCurrency] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [result, setResult] = useState(0);
+  const [currencyNames, setCurrencyNames] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        console.log("Date: ",date);
-        console.log("Source currency: ",sourceCurrency);
-        console.log("Target currency: ",targetCurrency);
-        console.log("Amount: ",amount);
-        console.log("Result: ",result);
+  //get all currency names
+  useEffect(() => {
+    const getCurrencyNames = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/getcurrencies");
+        setCurrencyNames(response.data);
+      } catch (error) {
+        console.error("Error: ", error);
+      }
+    };
+    getCurrencyNames();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.get("http://localhost:5000/convert", {
+        params: { date, sourceCurrency, targetCurrency, amount },
+      });
+      setResult(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error: ", error);
     }
+  };
 
   return (
     <div>
@@ -24,9 +44,9 @@ function MainPage() {
       </h1>
       <p className="lg:mx-32 opacity-40 py-6">
         Welcome to Convert Your Currencies Today, your go-to platform for quick
-        and easy currency conversions! Whether you're managing international
-        finances or just curious about the latest exchange rates, we've got you
-        covered. Start converting now and enjoy seamless, hassle-free
+        and easy currency conversions! Whether you are managing international
+        finances or just curious about the latest exchange rates, we have got
+        you covered. Start converting now and enjoy seamless, hassle-free
         transactions across the globe, all from the convenience of your device!
       </p>
 
@@ -41,11 +61,10 @@ function MainPage() {
                 Date
               </label>
               <input
-              onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => setDate(e.target.value)}
                 type="date"
                 id={date}
                 name={date}
-                
                 className="bg-gray-50 border border-gray-300 text-gray-900  text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
                    dark:text-white dark:text-opacity-30 dark:focus:ring-green-500 dark:focus:border-green-500"
                 placeholder="name@flowbite.com"
@@ -60,16 +79,19 @@ function MainPage() {
                 Source currency
               </label>
               <select
-              onChange={(e) => setSourceCurrency(e.target.value)}
+                onChange={(e) => setSourceCurrency(e.target.value)}
                 name={sourceCurrency}
                 id={sourceCurrency}
                 value={sourceCurrency}
-                
                 className="bg-gray-50 border border-gray-300 text-gray-900  text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
               dark:text-white dark:text-opacity-30 dark:focus:ring-green-500 dark:focus:border-green-500"
-                
               >
                 <option value="">Select the source currency</option>
+                {Object.keys(currencyNames).map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currencyNames[currency]}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="mb-4">
@@ -80,16 +102,19 @@ function MainPage() {
                 Target currency
               </label>
               <select
-              onChange={(e) => setTargetCurrency(e.target.value)}
+                onChange={(e) => setTargetCurrency(e.target.value)}
                 name={targetCurrency}
                 id={targetCurrency}
                 value={targetCurrency}
-                
                 className="bg-gray-50 border border-gray-300 text-gray-900  text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
               dark:text-white dark:text-opacity-30 dark:focus:ring-green-500 dark:focus:border-green-500"
-                
               >
                 <option value="">Select the target currency</option>
+                {Object.keys(currencyNames).map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currencyNames[currency]}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="mb-4">
@@ -100,25 +125,33 @@ function MainPage() {
                 Amount in source currency
               </label>
               <input
-              onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(e.target.value)}
                 type="text"
                 id={amount}
                 name={amount}
-                
                 className="bg-gray-50 border border-gray-300 text-gray-900  text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
                    dark:text-white dark:text-opacity-30 dark:focus:ring-green-500 dark:focus:border-green-500"
                 placeholder="Amount in source currency"
                 required
               />
             </div>
-            <button 
-            id={result}
-            name={result}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md">
+            <button
+              id={result}
+              name={result}
+              className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md"
+            >
               Get the target currency
             </button>
           </form>
         </section>
+      </div>
+      <div className=" flex justify-center items-center">
+        {!loading ? (
+          <section className="mt-5 ">
+            {amount} {currencyNames[sourceCurrency]} is equal to {result} in{" "}
+            {currencyNames[targetCurrency]}
+          </section>
+        ) : null}
       </div>
     </div>
   );
